@@ -15,9 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Recart_AI_Admin {
 
     private Recart_AI_Logger $logger;
+    private ?Recart_AI_License $license;
 
-    public function __construct( Recart_AI_Logger $logger ) {
-        $this->logger = $logger;
+    public function __construct( Recart_AI_Logger $logger, ?Recart_AI_License $license = null ) {
+        $this->logger  = $logger;
+        $this->license = $license;
     }
 
     /**
@@ -208,13 +210,32 @@ class Recart_AI_Admin {
                 <?php esc_html_e( 'ReCart AI Dashboard', 'recart-ai' ); ?>
             </h1>
 
-            <?php if ( $activation_date ) : ?>
-                <p class="recart-ai-activation-info">
-                    <?php printf(
-                        esc_html__( 'Plugin active since: %s', 'recart-ai' ),
-                        '<strong>' . esc_html( wp_date( 'd.m.Y H:i', (int) $activation_date ) ) . '</strong>'
-                    ); ?>
-                </p>
+            <?php
+            // License status banner
+            $license_valid = get_option( 'recart_ai_license_valid' ) === '1';
+            $license_plan  = get_option( 'recart_ai_license_plan_name', '' );
+            $license_key   = get_option( 'recart_ai_license_key', '' );
+
+            if ( ! $license_valid || empty( $license_key ) ) : ?>
+                <div class="recart-ai-license-status recart-ai-license-inactive" style="margin-bottom:20px;">
+                    <div class="recart-ai-license-badge recart-ai-license-badge-error">&#10007; <?php esc_html_e( 'No Active License', 'recart-ai' ); ?></div>
+                    <p><?php printf(
+                        wp_kses(
+                            __( 'Plugin functionality is disabled. <a href="%s">Activate your license</a> to start recovering abandoned carts.', 'recart-ai' ),
+                            array( 'a' => array( 'href' => array() ) )
+                        ),
+                        esc_url( admin_url( 'admin.php?page=recart-ai-settings&tab=license' ) )
+                    ); ?></p>
+                </div>
+            <?php else : ?>
+                <div class="recart-ai-license-status recart-ai-license-active" style="margin-bottom:20px; padding:12px 20px;">
+                    <span class="recart-ai-license-badge" style="margin-bottom:0;">&#10003; <?php echo esc_html( $license_plan ); ?></span>
+                    <?php if ( $activation_date ) : ?>
+                        <span style="margin-left:16px; color:#6b7280; font-size:13px;">
+                            <?php printf( esc_html__( 'Active since %s', 'recart-ai' ), esc_html( wp_date( 'd.m.Y', (int) $activation_date ) ) ); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
 
             <!-- Sales Analytics Section -->
@@ -721,8 +742,9 @@ class Recart_AI_Admin {
      * Render settings page with tabs.
      */
     public function render_settings_page(): void {
-        $active_tab = sanitize_text_field( wp_unslash( $_GET['tab'] ?? 'popup' ) );
+        $active_tab = sanitize_text_field( wp_unslash( $_GET['tab'] ?? 'license' ) );
         $tabs = array(
+            'license'    => __( 'License', 'recart-ai' ),
             'popup'      => __( 'Popup', 'recart-ai' ),
             'antiabuse'  => __( 'Anti-Abuse', 'recart-ai' ),
             'webhook'    => __( 'Webhook', 'recart-ai' ),
@@ -746,6 +768,11 @@ class Recart_AI_Admin {
             <div class="recart-ai-settings-content">
                 <?php
                 switch ( $active_tab ) {
+                    case 'license':
+                        if ( $this->license ) {
+                            $this->license->render_settings();
+                        }
+                        break;
                     case 'popup':
                         $this->render_popup_settings();
                         break;

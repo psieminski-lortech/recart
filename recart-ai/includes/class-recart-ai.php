@@ -2,6 +2,10 @@
 /**
  * The core plugin class.
  *
+ * All plugin functionality is gated behind a valid license check.
+ * Admin panel and license settings are always available so the user
+ * can enter/manage their license key.
+ *
  * @package ReCart_AI
  */
 
@@ -15,6 +19,11 @@ class Recart_AI {
      * Plugin instance.
      */
     private static ?Recart_AI $instance = null;
+
+    /**
+     * License manager instance.
+     */
+    private Recart_AI_License $license;
 
     /**
      * Get singleton instance.
@@ -37,8 +46,16 @@ class Recart_AI {
      * Load required dependencies.
      */
     private function load_dependencies(): void {
-        // Core
+        // License (always loaded)
+        require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-license.php';
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-logger.php';
+
+        // Admin (always loaded so license settings are accessible)
+        if ( is_admin() ) {
+            require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-admin.php';
+        }
+
+        // Core functionality (loaded only when license is potentially valid)
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-fingerprint.php';
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-antiabuse.php';
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-coupon.php';
@@ -47,11 +64,6 @@ class Recart_AI {
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-popup.php';
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-ajax.php';
         require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-cron.php';
-
-        // Admin
-        if ( is_admin() ) {
-            require_once RECART_AI_PLUGIN_DIR . 'includes/class-recart-ai-admin.php';
-        }
     }
 
     /**
@@ -61,28 +73,54 @@ class Recart_AI {
         // Register custom cron interval
         add_filter( 'cron_schedules', array( $this, 'add_cron_intervals' ) );
 
-        // Initialize components
-        $logger       = new Recart_AI_Logger();
+        // License is always initialized (for settings, heartbeat, notices)
+        $this->license = new Recart_AI_License();
+        $this->license->init();
+
+        $logger = new Recart_AI_Logger();
+
+        // Admin panel is always available (so user can manage license)
+        if ( is_admin() ) {
+            $admin = new Recart_AI_Admin( $logger, $this->license );
+            $admin->init();
+        }
+
+        // =====================================================
+        // FIREWALL: All functionality below requires valid license
+        // =====================================================
+        if ( ! $this->license->is_valid() ) {
+            return; // Plugin stops here without a license
+        }
+
+        // Check if popup limit is reached
+        $popup_limit_reached = $this->license->is_popup_limit_reached();
+
+        // Initialize core components
         $fingerprint  = new Recart_AI_Fingerprint();
         $antiabuse    = new Recart_AI_Antiabuse( $fingerprint, $logger );
         $coupon       = new Recart_AI_Coupon( $antiabuse, $logger );
         $webhook      = new Recart_AI_Webhook( $logger );
         $cart_tracker = new Recart_AI_Cart_Tracker( $fingerprint, $webhook, $logger );
-        $popup        = new Recart_AI_Popup();
         $ajax         = new Recart_AI_Ajax( $fingerprint, $antiabuse, $coupon, $cart_tracker, $webhook, $logger );
         $cron         = new Recart_AI_Cron( $logger );
 
-        // Admin
-        if ( is_admin() ) {
-            $admin = new Recart_AI_Admin( $logger );
-            $admin->init();
+        // Popup only if limit not reached
+        if ( ! $popup_limit_reached ) {
+            $popup = new Recart_AI_Popup();
+            $popup->init();
         }
 
-        // Frontend hooks
-        $popup->init();
+        // AJAX, cart tracking, and cron always active with valid license
         $ajax->init();
         $cart_tracker->init();
         $cron->init();
+    }
+
+    /**
+     * Get the license instance.
+     */
+    public function get_license(): Recart_AI_License {
+        return $this->license;
     }
 
     /**

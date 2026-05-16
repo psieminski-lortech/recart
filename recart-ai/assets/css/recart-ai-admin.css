@@ -332,3 +332,58 @@
         max-width: 80px;
     }
 }
+
+/* License Status */
+.recart-ai-license-status {
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid #e5e7eb;
+}
+
+.recart-ai-license-active {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.recart-ai-license-inactive {
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.recart-ai-license-none {
+    background: #fffbeb;
+    border-color: #fcd34d;
+}
+
+.recart-ai-license-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    background: #10b981;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.recart-ai-license-badge-error {
+    background: #ef4444;
+}
+
+/* Usage Bar */
+.recart-ai-usage-bar {
+    width: 200px;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.recart-ai-usage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}

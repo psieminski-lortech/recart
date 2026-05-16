@@ -61,6 +61,18 @@ $options = array(
     'recart_ai_formspree_endpoint',
     'recart_ai_db_version',
     'recart_ai_activated',
+    'recart_ai_license_key',
+    'recart_ai_license_server_url',
+    'recart_ai_license_valid',
+    'recart_ai_license_plan',
+    'recart_ai_license_plan_name',
+    'recart_ai_license_popup_limit',
+    'recart_ai_license_features',
+    'recart_ai_license_expires',
+    'recart_ai_license_last_check',
+    'recart_ai_license_warning',
+    'recart_ai_popups_remaining',
+    'recart_ai_popups_this_period',
 );
 
 foreach ( $options as $option ) {
@@ -80,3 +92,4 @@ foreach ( $coupon_ids as $coupon_id ) {
 wp_clear_scheduled_hook( 'recart_ai_cleanup_expired_coupons' );
 wp_clear_scheduled_hook( 'recart_ai_check_abandoned_carts' );
 wp_clear_scheduled_hook( 'recart_ai_cleanup_old_logs' );
+wp_clear_scheduled_hook( 'recart_ai_license_heartbeat' );
