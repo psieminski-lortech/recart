@@ -1,0 +1,255 @@
+/**
+ * ReCart AI - Admin Panel Styles
+ *
+ * @package ReCart_AI
+ * @version 1.0.0
+ */
+
+/* General Admin Wrapper */
+.recart-ai-admin {
+    max-width: 1200px;
+}
+
+.recart-ai-admin-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 28px;
+    margin-bottom: 24px;
+}
+
+.recart-ai-logo {
+    font-size: 32px;
+}
+
+/* Stats Grid */
+.recart-ai-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.recart-ai-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: box-shadow 0.2s;
+}
+
+.recart-ai-stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.recart-ai-stat-card.recart-ai-stat-success {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.recart-ai-stat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.recart-ai-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.recart-ai-stat-label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* Info Cards */
+.recart-ai-info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.recart-ai-info-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.recart-ai-info-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #1f2937;
+}
+
+.recart-ai-info-card p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.recart-ai-info-card a {
+    text-decoration: none;
+}
+
+/* Tabs */
+.recart-ai-tabs {
+    margin-bottom: 0;
+}
+
+.recart-ai-settings-content {
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 24px;
+}
+
+/* Form Table */
+.recart-ai-form-table th {
+    width: 220px;
+    padding-top: 16px;
+}
+
+.recart-ai-form-table td {
+    padding-top: 12px;
+}
+
+.recart-ai-form-table .description {
+    color: #6b7280;
+    font-style: normal;
+    margin-top: 4px;
+}
+
+/* Code Block */
+.recart-ai-code-block {
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    font-family: 'Courier New', Courier, monospace;
+    max-height: 400px;
+}
+
+/* Badges */
+.recart-ai-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recart-ai-badge-fingerprint {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.recart-ai-badge-ip {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.recart-ai-badge-email {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Event type badges */
+.recart-ai-event-popup_shown,
+.recart-ai-event-popup_closed,
+.recart-ai-event-popup_dismissed {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.recart-ai-event-cart_abandoned {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.recart-ai-event-cart_recovered {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.recart-ai-event-coupon_generated,
+.recart-ai-event-coupon_used {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.recart-ai-event-blocked,
+.recart-ai-event-anomaly_detected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.recart-ai-event-webhook_sent,
+.recart-ai-event-webhook_error {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.recart-ai-event-eligible,
+.recart-ai-event-first_contact {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+/* Log Filters */
+.recart-ai-log-filters {
+    margin-bottom: 16px;
+}
+
+.recart-ai-log-filters form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Blacklist Form */
+.recart-ai-blacklist-form {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.recart-ai-blacklist-form h3 {
+    margin-top: 0;
+}
+
+/* Table Styles */
+.recart-ai-admin .wp-list-table code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .recart-ai-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .recart-ai-form-table th {
+        width: auto;
+    }
+
+    .recart-ai-info-cards {
+        grid-template-columns: 1fr;
+    }
+}

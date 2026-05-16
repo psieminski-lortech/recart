@@ -1,0 +1,57 @@
+# Copyright (C) 2026 Asystent.io / DATA SERVICES PIOTR SIEMIŃSKI
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: ReCart AI 1.0.0\n"
+"Report-Msgid-Bugs-To: https://asystent.io\n"
+"POT-Creation-Date: 2026-01-01 00:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: includes/class-recart-ai-popup.php
+msgid "Nie odchodź z pustymi rękami!"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Widzimy, że masz produkty w koszyku. Zostaw nam swój email, a pomożemy Ci dokończyć zakupy."
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Zapisz mój koszyk"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Twój email"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Telefon (opcjonalnie)"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Dziękujemy! Sprawdź swoją skrzynkę."
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Mamy coś dla Ciebie! Użyj kodu:"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Darmowa dostawa z kodem:"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Masz pytania? Napisz do nas!"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Nie, dziękuję"
+msgstr ""
+
+#: includes/class-recart-ai-popup.php
+msgid "Twoje dane są bezpieczne. Nie wysyłamy spamu."
+msgstr ""
