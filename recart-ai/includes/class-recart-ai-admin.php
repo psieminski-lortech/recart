@@ -167,8 +167,8 @@ class Recart_AI_Admin {
         global $wpdb;
 
         // Get stats
-        $fp_table    = $wpdb->prefix . 'recart_fingerprints';
-        $carts_table = $wpdb->prefix . 'recart_abandoned_carts';
+        $fp_table      = $wpdb->prefix . 'recart_fingerprints';
+        $carts_table   = $wpdb->prefix . 'recart_abandoned_carts';
         $coupons_table = $wpdb->prefix . 'recart_coupons';
 
         $total_fingerprints = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$fp_table}" );
@@ -193,6 +193,14 @@ class Recart_AI_Admin {
             $wpdb->prepare( "SELECT COALESCE(SUM(cart_total), 0) FROM {$carts_table} WHERE recovered = 1 AND abandon_time >= %s", gmdate( 'Y-m-d', strtotime( '-30 days' ) ) )
         );
 
+        // ============================================================
+        // SALES ANALYTICS - Orders completed since plugin activation
+        // ============================================================
+        $activation_date = get_option( 'recart_ai_activated', 0 );
+        $activation_formatted = $activation_date ? gmdate( 'Y-m-d H:i:s', (int) $activation_date ) : gmdate( 'Y-m-d H:i:s', strtotime( '-30 days' ) );
+
+        $sales_data = $this->get_sales_analytics( $activation_formatted );
+
         ?>
         <div class="wrap recart-ai-admin">
             <h1 class="recart-ai-admin-title">
@@ -200,43 +208,167 @@ class Recart_AI_Admin {
                 <?php esc_html_e( 'ReCart AI Dashboard', 'recart-ai' ); ?>
             </h1>
 
-            <div class="recart-ai-stats-grid">
-                <div class="recart-ai-stat-card">
-                    <div class="recart-ai-stat-icon">👤</div>
-                    <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_fingerprints ) ); ?></div>
-                    <div class="recart-ai-stat-label"><?php esc_html_e( 'Unique Visitors Tracked', 'recart-ai' ); ?></div>
-                </div>
+            <?php if ( $activation_date ) : ?>
+                <p class="recart-ai-activation-info">
+                    <?php printf(
+                        esc_html__( 'Plugin active since: %s', 'recart-ai' ),
+                        '<strong>' . esc_html( wp_date( 'd.m.Y H:i', (int) $activation_date ) ) . '</strong>'
+                    ); ?>
+                </p>
+            <?php endif; ?>
 
-                <div class="recart-ai-stat-card">
-                    <div class="recart-ai-stat-icon">🛒</div>
-                    <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_abandoned ) ); ?></div>
-                    <div class="recart-ai-stat-label"><?php esc_html_e( 'Abandoned Carts', 'recart-ai' ); ?></div>
-                </div>
+            <!-- Sales Analytics Section -->
+            <div class="recart-ai-section">
+                <h2 class="recart-ai-section-title"><?php esc_html_e( 'Sales Analytics (since plugin activation)', 'recart-ai' ); ?></h2>
 
-                <div class="recart-ai-stat-card recart-ai-stat-success">
-                    <div class="recart-ai-stat-icon">✅</div>
-                    <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_recovered ) ); ?></div>
-                    <div class="recart-ai-stat-label"><?php esc_html_e( 'Recovered Carts', 'recart-ai' ); ?></div>
-                </div>
+                <div class="recart-ai-stats-grid recart-ai-sales-grid">
+                    <div class="recart-ai-stat-card recart-ai-stat-revenue">
+                        <div class="recart-ai-stat-icon">💵</div>
+                        <div class="recart-ai-stat-value"><?php echo wp_kses_post( wc_price( $sales_data['total_revenue'] ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Total Revenue', 'recart-ai' ); ?></div>
+                    </div>
 
-                <div class="recart-ai-stat-card">
-                    <div class="recart-ai-stat-icon">📊</div>
-                    <div class="recart-ai-stat-value"><?php echo esc_html( $recovery_rate ); ?>%</div>
-                    <div class="recart-ai-stat-label"><?php esc_html_e( 'Recovery Rate', 'recart-ai' ); ?></div>
-                </div>
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">📦</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $sales_data['total_orders'] ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Total Orders', 'recart-ai' ); ?></div>
+                    </div>
 
-                <div class="recart-ai-stat-card">
-                    <div class="recart-ai-stat-icon">🎟️</div>
-                    <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_coupons ) ); ?></div>
-                    <div class="recart-ai-stat-label"><?php esc_html_e( 'Coupons Generated', 'recart-ai' ); ?></div>
-                </div>
+                    <div class="recart-ai-stat-card recart-ai-stat-success">
+                        <div class="recart-ai-stat-icon">🔄</div>
+                        <div class="recart-ai-stat-value"><?php echo wp_kses_post( wc_price( $sales_data['recovered_revenue'] ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Revenue from Recovered Carts', 'recart-ai' ); ?></div>
+                    </div>
 
-                <div class="recart-ai-stat-card">
-                    <div class="recart-ai-stat-icon">💰</div>
-                    <div class="recart-ai-stat-value"><?php echo esc_html( wc_price( $saved_revenue ) ); ?></div>
-                    <div class="recart-ai-stat-label"><?php esc_html_e( 'Revenue Saved (30 days)', 'recart-ai' ); ?></div>
+                    <div class="recart-ai-stat-card recart-ai-stat-success">
+                        <div class="recart-ai-stat-icon">🎯</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $sales_data['recovered_orders'] ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Orders via ReCart Coupons', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">📈</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( $sales_data['recart_share'] ); ?>%</div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'ReCart Share of Revenue', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">🧾</div>
+                        <div class="recart-ai-stat-value"><?php echo wp_kses_post( wc_price( $sales_data['avg_order_value'] ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Average Order Value', 'recart-ai' ); ?></div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Sales Breakdown by Period -->
+            <div class="recart-ai-section">
+                <h2 class="recart-ai-section-title"><?php esc_html_e( 'Revenue Breakdown', 'recart-ai' ); ?></h2>
+
+                <table class="wp-list-table widefat fixed striped recart-ai-sales-table">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e( 'Period', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'Total Orders', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'Total Revenue', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'ReCart Orders', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'ReCart Revenue', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'ReCart %', 'recart-ai' ); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $sales_data['periods'] as $period ) : ?>
+                            <tr>
+                                <td><strong><?php echo esc_html( $period['label'] ); ?></strong></td>
+                                <td><?php echo esc_html( number_format_i18n( $period['total_orders'] ) ); ?></td>
+                                <td><?php echo wp_kses_post( wc_price( $period['total_revenue'] ) ); ?></td>
+                                <td><?php echo esc_html( number_format_i18n( $period['recart_orders'] ) ); ?></td>
+                                <td><?php echo wp_kses_post( wc_price( $period['recart_revenue'] ) ); ?></td>
+                                <td>
+                                    <span class="recart-ai-percentage-bar">
+                                        <span class="recart-ai-percentage-fill" style="width: <?php echo esc_attr( min( 100, $period['recart_percent'] ) ); ?>%;"></span>
+                                        <span class="recart-ai-percentage-text"><?php echo esc_html( $period['recart_percent'] ); ?>%</span>
+                                    </span>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Original Stats Section -->
+            <div class="recart-ai-section">
+                <h2 class="recart-ai-section-title"><?php esc_html_e( 'Cart Recovery Stats', 'recart-ai' ); ?></h2>
+
+                <div class="recart-ai-stats-grid">
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">👤</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_fingerprints ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Unique Visitors Tracked', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">🛒</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_abandoned ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Abandoned Carts', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card recart-ai-stat-success">
+                        <div class="recart-ai-stat-icon">✅</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_recovered ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Recovered Carts', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">📊</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( $recovery_rate ); ?>%</div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Recovery Rate', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">🎟️</div>
+                        <div class="recart-ai-stat-value"><?php echo esc_html( number_format_i18n( $total_coupons ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Coupons Generated', 'recart-ai' ); ?></div>
+                    </div>
+
+                    <div class="recart-ai-stat-card">
+                        <div class="recart-ai-stat-icon">💰</div>
+                        <div class="recart-ai-stat-value"><?php echo wp_kses_post( wc_price( $saved_revenue ) ); ?></div>
+                        <div class="recart-ai-stat-label"><?php esc_html_e( 'Revenue Saved (30 days)', 'recart-ai' ); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Recovered Products -->
+            <?php if ( ! empty( $sales_data['top_products'] ) ) : ?>
+            <div class="recart-ai-section">
+                <h2 class="recart-ai-section-title"><?php esc_html_e( 'Top Products in Recovered Orders', 'recart-ai' ); ?></h2>
+
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e( 'Product', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'Times Recovered', 'recart-ai' ); ?></th>
+                            <th><?php esc_html_e( 'Revenue', 'recart-ai' ); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $sales_data['top_products'] as $product ) : ?>
+                            <tr>
+                                <td>
+                                    <?php if ( $product['url'] ) : ?>
+                                        <a href="<?php echo esc_url( $product['url'] ); ?>" target="_blank"><?php echo esc_html( $product['name'] ); ?></a>
+                                    <?php else : ?>
+                                        <?php echo esc_html( $product['name'] ); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html( number_format_i18n( $product['count'] ) ); ?></td>
+                                <td><?php echo wp_kses_post( wc_price( $product['revenue'] ) ); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
 
             <div class="recart-ai-info-cards">
                 <div class="recart-ai-info-card">
@@ -260,6 +392,329 @@ class Recart_AI_Admin {
             </div>
         </div>
         <?php
+    }
+
+    /**
+     * Get sales analytics data since plugin activation.
+     *
+     * Queries WooCommerce orders to calculate total revenue,
+     * orders recovered via ReCart coupons, and period breakdowns.
+     *
+     * @param string $since_date Date from which to calculate (Y-m-d H:i:s format).
+     * @return array Sales analytics data.
+     */
+    private function get_sales_analytics( string $since_date ): array {
+        global $wpdb;
+
+        $result = array(
+            'total_revenue'     => 0,
+            'total_orders'      => 0,
+            'recovered_revenue' => 0,
+            'recovered_orders'  => 0,
+            'recart_share'      => 0,
+            'avg_order_value'   => 0,
+            'periods'           => array(),
+            'top_products'      => array(),
+        );
+
+        // Use HPOS-compatible queries if available
+        $orders_table = $wpdb->prefix . 'wc_orders';
+        $orders_meta  = $wpdb->prefix . 'wc_orders_meta';
+        $use_hpos     = $wpdb->get_var( "SHOW TABLES LIKE '{$orders_table}'" ) === $orders_table;
+
+        if ( $use_hpos ) {
+            // HPOS (High-Performance Order Storage) queries
+            $result['total_orders'] = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$orders_table} WHERE status IN ('wc-completed', 'wc-processing') AND date_created_gmt >= %s",
+                    $since_date
+                )
+            );
+
+            $result['total_revenue'] = (float) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COALESCE(SUM(total_amount), 0) FROM {$orders_table} WHERE status IN ('wc-completed', 'wc-processing') AND date_created_gmt >= %s",
+                    $since_date
+                )
+            );
+
+            // Orders with ReCart coupons
+            $recart_orders = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT o.id, o.total_amount, o.date_created_gmt
+                     FROM {$orders_table} o
+                     INNER JOIN {$wpdb->prefix}wc_order_coupon_lookup cl ON o.id = cl.order_id
+                     INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = cl.coupon_id AND pm.meta_key = '_recart_ai_coupon' AND pm.meta_value = '1'
+                     WHERE o.status IN ('wc-completed', 'wc-processing')
+                     AND o.date_created_gmt >= %s
+                     GROUP BY o.id",
+                    $since_date
+                )
+            );
+
+        } else {
+            // Legacy post-based order storage
+            $result['total_orders'] = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'shop_order' AND post_status IN ('wc-completed', 'wc-processing') AND post_date >= %s",
+                    $since_date
+                )
+            );
+
+            $result['total_revenue'] = (float) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COALESCE(SUM(pm.meta_value), 0)
+                     FROM {$wpdb->posts} p
+                     INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_order_total'
+                     WHERE p.post_type = 'shop_order'
+                     AND p.post_status IN ('wc-completed', 'wc-processing')
+                     AND p.post_date >= %s",
+                    $since_date
+                )
+            );
+
+            // Orders with ReCart coupons (legacy)
+            $recart_orders = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT p.ID as id, pm_total.meta_value as total_amount, p.post_date as date_created_gmt
+                     FROM {$wpdb->posts} p
+                     INNER JOIN {$wpdb->postmeta} pm_total ON p.ID = pm_total.post_id AND pm_total.meta_key = '_order_total'
+                     INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_id AND oi.order_item_type = 'coupon'
+                     INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id AND oim.meta_key = 'coupon_id'
+                     INNER JOIN {$wpdb->postmeta} pm_recart ON oim.meta_value = pm_recart.post_id AND pm_recart.meta_key = '_recart_ai_coupon' AND pm_recart.meta_value = '1'
+                     WHERE p.post_type = 'shop_order'
+                     AND p.post_status IN ('wc-completed', 'wc-processing')
+                     AND p.post_date >= %s
+                     GROUP BY p.ID",
+                    $since_date
+                )
+            );
+        }
+
+        // Calculate recovered stats
+        if ( ! empty( $recart_orders ) ) {
+            $result['recovered_orders'] = count( $recart_orders );
+            $result['recovered_revenue'] = array_sum( array_map( function ( $o ) {
+                return (float) $o->total_amount;
+            }, $recart_orders ) );
+        }
+
+        // Calculate derived metrics
+        if ( $result['total_revenue'] > 0 ) {
+            $result['recart_share'] = round( ( $result['recovered_revenue'] / $result['total_revenue'] ) * 100, 1 );
+        }
+
+        if ( $result['total_orders'] > 0 ) {
+            $result['avg_order_value'] = round( $result['total_revenue'] / $result['total_orders'], 2 );
+        }
+
+        // Period breakdown (last 4 weeks + current week)
+        $result['periods'] = $this->get_period_breakdown( $since_date, $use_hpos );
+
+        // Top products in recovered orders
+        $result['top_products'] = $this->get_top_recovered_products( $since_date );
+
+        return $result;
+    }
+
+    /**
+     * Get revenue breakdown by weekly periods.
+     *
+     * @param string $since_date Start date.
+     * @param bool   $use_hpos  Whether to use HPOS tables.
+     * @return array Period data.
+     */
+    private function get_period_breakdown( string $since_date, bool $use_hpos ): array {
+        global $wpdb;
+
+        $periods = array();
+
+        // Generate last 4 weeks + current week
+        $ranges = array(
+            array(
+                'label' => __( 'This Week', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-d', strtotime( 'monday this week' ) ),
+                'end'   => gmdate( 'Y-m-d', strtotime( '+1 day' ) ),
+            ),
+            array(
+                'label' => __( 'Last Week', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-d', strtotime( 'monday last week' ) ),
+                'end'   => gmdate( 'Y-m-d', strtotime( 'monday this week' ) ),
+            ),
+            array(
+                'label' => __( '2 Weeks Ago', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-d', strtotime( '-2 weeks monday' ) ),
+                'end'   => gmdate( 'Y-m-d', strtotime( 'monday last week' ) ),
+            ),
+            array(
+                'label' => __( '3 Weeks Ago', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-d', strtotime( '-3 weeks monday' ) ),
+                'end'   => gmdate( 'Y-m-d', strtotime( '-2 weeks monday' ) ),
+            ),
+            array(
+                'label' => __( 'This Month', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-01' ),
+                'end'   => gmdate( 'Y-m-d', strtotime( '+1 day' ) ),
+            ),
+            array(
+                'label' => __( 'Last 30 Days', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-d', strtotime( '-30 days' ) ),
+                'end'   => gmdate( 'Y-m-d', strtotime( '+1 day' ) ),
+            ),
+            array(
+                'label' => __( 'Since Activation', 'recart-ai' ),
+                'start' => gmdate( 'Y-m-d', strtotime( $since_date ) ),
+                'end'   => gmdate( 'Y-m-d', strtotime( '+1 day' ) ),
+            ),
+        );
+
+        foreach ( $ranges as $range ) {
+            if ( $use_hpos ) {
+                $orders_table = $wpdb->prefix . 'wc_orders';
+
+                $total_orders = (int) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COUNT(*) FROM {$orders_table} WHERE status IN ('wc-completed', 'wc-processing') AND date_created_gmt >= %s AND date_created_gmt < %s",
+                        $range['start'],
+                        $range['end']
+                    )
+                );
+
+                $total_revenue = (float) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COALESCE(SUM(total_amount), 0) FROM {$orders_table} WHERE status IN ('wc-completed', 'wc-processing') AND date_created_gmt >= %s AND date_created_gmt < %s",
+                        $range['start'],
+                        $range['end']
+                    )
+                );
+
+                // ReCart orders in this period
+                $recart_data = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT COUNT(DISTINCT o.id) as cnt, COALESCE(SUM(o.total_amount), 0) as rev
+                         FROM {$orders_table} o
+                         INNER JOIN {$wpdb->prefix}wc_order_coupon_lookup cl ON o.id = cl.order_id
+                         INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = cl.coupon_id AND pm.meta_key = '_recart_ai_coupon' AND pm.meta_value = '1'
+                         WHERE o.status IN ('wc-completed', 'wc-processing')
+                         AND o.date_created_gmt >= %s AND o.date_created_gmt < %s",
+                        $range['start'],
+                        $range['end']
+                    )
+                );
+            } else {
+                $total_orders = (int) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'shop_order' AND post_status IN ('wc-completed', 'wc-processing') AND post_date >= %s AND post_date < %s",
+                        $range['start'],
+                        $range['end']
+                    )
+                );
+
+                $total_revenue = (float) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COALESCE(SUM(pm.meta_value), 0)
+                         FROM {$wpdb->posts} p
+                         INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_order_total'
+                         WHERE p.post_type = 'shop_order'
+                         AND p.post_status IN ('wc-completed', 'wc-processing')
+                         AND p.post_date >= %s AND p.post_date < %s",
+                        $range['start'],
+                        $range['end']
+                    )
+                );
+
+                $recart_data = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT COUNT(DISTINCT p.ID) as cnt, COALESCE(SUM(pm_total.meta_value), 0) as rev
+                         FROM {$wpdb->posts} p
+                         INNER JOIN {$wpdb->postmeta} pm_total ON p.ID = pm_total.post_id AND pm_total.meta_key = '_order_total'
+                         INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_id AND oi.order_item_type = 'coupon'
+                         INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id AND oim.meta_key = 'coupon_id'
+                         INNER JOIN {$wpdb->postmeta} pm_recart ON oim.meta_value = pm_recart.post_id AND pm_recart.meta_key = '_recart_ai_coupon' AND pm_recart.meta_value = '1'
+                         WHERE p.post_type = 'shop_order'
+                         AND p.post_status IN ('wc-completed', 'wc-processing')
+                         AND p.post_date >= %s AND p.post_date < %s",
+                        $range['start'],
+                        $range['end']
+                    )
+                );
+            }
+
+            $recart_orders  = $recart_data ? (int) $recart_data->cnt : 0;
+            $recart_revenue = $recart_data ? (float) $recart_data->rev : 0;
+            $recart_percent = $total_revenue > 0 ? round( ( $recart_revenue / $total_revenue ) * 100, 1 ) : 0;
+
+            $periods[] = array(
+                'label'          => $range['label'],
+                'total_orders'   => $total_orders,
+                'total_revenue'  => $total_revenue,
+                'recart_orders'  => $recart_orders,
+                'recart_revenue' => $recart_revenue,
+                'recart_percent' => $recart_percent,
+            );
+        }
+
+        return $periods;
+    }
+
+    /**
+     * Get top products from recovered orders.
+     *
+     * @param string $since_date Start date.
+     * @return array Top products data.
+     */
+    private function get_top_recovered_products( string $since_date ): array {
+        global $wpdb;
+
+        // Get order IDs that used ReCart coupons
+        $order_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT p.ID
+                 FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_id AND oi.order_item_type = 'coupon'
+                 INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id AND oim.meta_key = 'coupon_id'
+                 INNER JOIN {$wpdb->postmeta} pm_recart ON oim.meta_value = pm_recart.post_id AND pm_recart.meta_key = '_recart_ai_coupon' AND pm_recart.meta_value = '1'
+                 WHERE p.post_type = 'shop_order'
+                 AND p.post_status IN ('wc-completed', 'wc-processing')
+                 AND p.post_date >= %s
+                 LIMIT 100",
+                $since_date
+            )
+        );
+
+        if ( empty( $order_ids ) ) {
+            return array();
+        }
+
+        $placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+
+        $products = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT oim_pid.meta_value as product_id, COUNT(*) as cnt, SUM(oim_total.meta_value) as revenue
+                 FROM {$wpdb->prefix}woocommerce_order_items oi
+                 INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim_pid ON oi.order_item_id = oim_pid.order_item_id AND oim_pid.meta_key = '_product_id'
+                 INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim_total ON oi.order_item_id = oim_total.order_item_id AND oim_total.meta_key = '_line_total'
+                 WHERE oi.order_id IN ({$placeholders})
+                 AND oi.order_item_type = 'line_item'
+                 GROUP BY oim_pid.meta_value
+                 ORDER BY cnt DESC
+                 LIMIT 10",
+                ...$order_ids
+            )
+        );
+
+        $top = array();
+        foreach ( $products as $row ) {
+            $product = wc_get_product( (int) $row->product_id );
+            $top[] = array(
+                'name'    => $product ? $product->get_name() : __( 'Deleted Product', 'recart-ai' ) . ' #' . $row->product_id,
+                'count'   => (int) $row->cnt,
+                'revenue' => (float) $row->revenue,
+                'url'     => $product ? get_edit_post_link( $product->get_id() ) : '',
+            );
+        }
+
+        return $top;
     }
 
     /**
